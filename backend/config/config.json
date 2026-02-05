@@ -1,0 +1,26 @@
+{
+  "development": {
+    "username": "postgres",
+    "password": "0vo_je_teska_lozinka1",
+    "database": "iteh_mvp",
+    "host": "127.0.0.1",
+    "port": 5434,
+    "dialect": "postgres"
+  },
+  "test": {
+    "username": "postgres",
+    "password": "0vo_je_teska_lozinka1",
+    "database": "iteh_mvp_test",
+    "host": "127.0.0.1",
+    "port": 5434,
+    "dialect": "postgres"
+  },
+  "production": {
+    "username": "postgres",
+    "password": "0vo_je_teska_lozinka1",
+    "database": "iteh_mvp_prod",
+    "host": "127.0.0.1",
+    "port": 5434,
+    "dialect": "postgres"
+  }
+}
