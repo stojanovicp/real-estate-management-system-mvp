@@ -4,7 +4,7 @@ const router = express.Router();
 const auth = require('../middleware/auth');
 const requireRole = require('../middleware/requireRole');
 const asyncHandler = require('../middleware/asyncHandler');
-const { Inquiry, Apartment, Building } = require('../../models');
+const { Inquiry, Apartment, Building, Reservation } = require('../../models');
 
 
 router.get('/test', auth, (req, res) => {
@@ -200,5 +200,99 @@ router.delete(
   })
 );
 
+router.get(
+  '/reservations',
+  auth,
+  requireRole('admin'),
+  asyncHandler(async (req, res) => {
+    const reservations = await Reservation.findAll({
+      include: [
+        {
+          model: Apartment,
+          as: 'apartment',
+          attributes: ['id', 'number'],
+          include: {
+            model: Building,
+            as: 'building',
+            attributes: ['id', 'name']
+          }
+        }
+      ],
+      order: [['createdAt', 'DESC']]
+    });
+
+    res.json(reservations);
+  })
+);
+
+router.post(
+  '/reservations',
+  auth,
+  requireRole('admin'),
+  asyncHandler(async (req, res) => {
+    const { apartmentId, startDate, endDate, status } = req.body;
+
+    if (!apartmentId || !startDate || !endDate || !status) {
+      return res.status(400).json({
+        message: 'apartmentId, startDate, endDate i status su obavezni'
+      });
+    }
+
+    const apartment = await Apartment.findByPk(apartmentId);
+    if (!apartment) {
+      return res.status(400).json({ message: 'Stan ne postoji' });
+    }
+
+    const reservation = await Reservation.create({
+      apartmentId,
+      startDate,
+      endDate,
+      status
+    });
+
+    res.status(201).json(reservation);
+  })
+);
+
+router.put(
+  '/reservations/:id',
+  auth,
+  requireRole('admin'),
+  asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const { startDate, endDate, status } = req.body;
+
+    const reservation = await Reservation.findByPk(id);
+    if (!reservation) {
+      return res.status(404).json({ message: 'Rezervacija ne postoji' });
+    }
+
+    reservation.startDate = startDate ?? reservation.startDate;
+    reservation.endDate = endDate ?? reservation.endDate;
+    reservation.status = status ?? reservation.status;
+
+    await reservation.save();
+
+    res.json(reservation);
+  })
+);
+
+router.delete(
+  '/reservations/:id',
+  auth,
+  requireRole('admin'),
+  asyncHandler(async (req, res) => {
+    const { id } = req.params;
+
+    const reservation = await Reservation.findByPk(id);
+    if (!reservation) {
+      return res.status(404).json({ message: 'Rezervacija ne postoji' });
+    }
+
+    await reservation.destroy();
+
+    res.json({ message: 'Rezervacija uspešno obrisana' });
+  })
+);
 
 module.exports = router;
