@@ -4,8 +4,7 @@ const router = express.Router();
 const auth = require('../middleware/auth');
 const requireRole = require('../middleware/requireRole');
 const asyncHandler = require('../middleware/asyncHandler');
-const { Inquiry, Apartment } = require('../../models');
-const { Building } = require('../../models');
+const { Inquiry, Apartment, Building } = require('../../models');
 
 
 router.get('/test', auth, (req, res) => {
@@ -15,22 +14,19 @@ router.get('/test', auth, (req, res) => {
   });
 });
 
-router.get('/inquiries', auth, asyncHandler(async (req, res) => {
-  if (req.user.role !== 'admin') {
-    return res.status(403).json({ message: 'Nemate dozvolu' });
-  }
+router.get('/inquiries',auth, requireRole('admin'), asyncHandler(async (req, res) => {
+    const inquiries = await Inquiry.findAll({
+      include: {
+        model: Apartment,
+        as: 'apartment',
+        attributes: ['id', 'number']
+      },
+      order: [['createdAt', 'DESC']]
+    });
 
-  const inquiries = await Inquiry.findAll({
-  include: {
-    model: Apartment,
-    as: 'apartment',
-    attributes: ['id', 'number']
-  },
-  order: [['createdAt', 'DESC']]
-});
-
-  res.json(inquiries);
-}));
+    res.json(inquiries);
+  })
+);
 
 router.get(
   '/buildings',
@@ -103,5 +99,106 @@ router.delete(
     res.json({ message: 'Zgrada uspešno obrisana' });
   })
 );
+
+router.get(
+  '/apartments',
+  auth,
+  requireRole('admin'),
+  asyncHandler(async (req, res) => {
+    const apartments = await Apartment.findAll({
+      include: [
+        {
+          model: Building,
+          as: 'building',
+          attributes: ['id', 'name', 'address']
+        }
+      ],
+      order: [['createdAt', 'DESC']]
+    });
+
+    res.json(apartments);
+  })
+);
+
+router.post(
+  '/apartments',
+  auth,
+  requireRole('admin'),
+  asyncHandler(async (req, res) => {
+    const { buildingId, number, price, status } = req.body;
+
+    if (!buildingId || !number || price == null || !status) {
+      return res.status(400).json({
+        message: 'buildingId, number, price i status su obavezni'
+      });
+    }
+
+    // Provera da li zgrada postoji (FK logika na nivou aplikacije)
+    const building = await Building.findByPk(buildingId);
+    if (!building) {
+      return res.status(400).json({ message: 'Ne postoji zgrada sa datim buildingId' });
+    }
+
+    const apartment = await Apartment.create({
+      buildingId,
+      number,
+      price,
+      status
+    });
+
+    res.status(201).json(apartment);
+  })
+);
+
+router.put(
+  '/apartments/:id',
+  auth,
+  requireRole('admin'),
+  asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const { buildingId, number, price, status } = req.body;
+
+    const apartment = await Apartment.findByPk(id);
+    if (!apartment) {
+      return res.status(404).json({ message: 'Stan ne postoji' });
+    }
+
+    // Ako se menja buildingId, proveri da li zgrada postoji
+    if (buildingId != null) {
+      const building = await Building.findByPk(buildingId);
+      if (!building) {
+        return res.status(400).json({ message: 'Ne postoji zgrada sa datim buildingId' });
+      }
+      apartment.buildingId = buildingId;
+    }
+
+    apartment.number = number ?? apartment.number;
+    apartment.price = price ?? apartment.price;
+    apartment.status = status ?? apartment.status;
+
+    await apartment.save();
+
+    res.json(apartment);
+  })
+);
+
+router.delete(
+  '/apartments/:id',
+  auth,
+  requireRole('admin'),
+  asyncHandler(async (req, res) => {
+    const { id } = req.params;
+
+    const apartment = await Apartment.findByPk(id);
+    if (!apartment) {
+      return res.status(404).json({ message: 'Stan ne postoji' });
+    }
+
+    await apartment.destroy();
+
+    res.json({ message: 'Stan uspešno obrisan' });
+  })
+);
+
 
 module.exports = router;
