@@ -1,6 +1,7 @@
 const express = require('express');
 const auth = require('../middleware/auth');
 const { Inquiry, Apartment } = require('../../models');
+const asyncHandler = require('../middleware/asyncHandler');
 
 const router = express.Router();
 
@@ -11,7 +12,7 @@ router.get('/test', auth, (req, res) => {
   });
 });
 
-router.get('/inquiries', auth, async (req, res) => {
+router.get('/inquiries', auth, asyncHandler(async (req, res) => {
   if (req.user.role !== 'admin') {
     return res.status(403).json({ message: 'Nemate dozvolu' });
   }
@@ -26,7 +27,7 @@ router.get('/inquiries', auth, async (req, res) => {
 });
 
   res.json(inquiries);
-});
+}));
 
 
 module.exports = router;

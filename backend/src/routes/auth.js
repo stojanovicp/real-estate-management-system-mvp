@@ -3,10 +3,11 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const { User } = require('../../models');
 const auth = require('../middleware/auth');
+const asyncHandler = require('../middleware/asyncHandler');
 
 const router = express.Router();
 
-router.post('/login', async (req, res) => {
+router.post('/login', asyncHandler(async (req, res) => {
   const { email, password } = req.body;
 
   if (!email || !password) {
@@ -30,13 +31,13 @@ router.post('/login', async (req, res) => {
   );
 
   res.json({ token });
-});
+}));
 
 router.post('/logout', (req, res) => {
   res.json({ message: 'Odjavljeni ste' });
 });
 
-router.post('/register', auth, async (req, res) => {
+router.post('/register', auth, asyncHandler(async (req, res) => {
   if (req.user.role !== 'admin') {
     return res.status(403).json({ message: 'Nemate dozvolu' });
   }
@@ -60,6 +61,6 @@ router.post('/register', auth, async (req, res) => {
   });
 
   res.status(201).json({ id: user.id, email: user.email, role: user.role });
-});
+}));
 
 module.exports = router;
