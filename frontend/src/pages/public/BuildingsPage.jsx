@@ -1,36 +1,44 @@
-import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
-import Layout from '../components/Layout';
-import Card from '../components/Card';
-import { api } from '../api/apiClient';
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import { api } from "../../api/apiClient";
 
 export default function BuildingsPage() {
   const [buildings, setBuildings] = useState([]);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-  api
-    .get('/buildings')
-    .then((data) => setBuildings(data))
-    .catch(() => setError('Greška pri učitavanju zgrada'));
-}, []);
+    api
+      .get("/buildings")
+      .then((data) => setBuildings(Array.isArray(data) ? data : []))
+      .catch((err) => {
+        const details = err?.status ? ` (HTTP ${err.status})` : "";
+        setError((err?.message || "Greška pri učitavanju zgrada") + details);
+      })
+      .finally(() => setLoading(false));
+  }, []);
 
-  if (error) return <p>{error}</p>;
+  if (loading) return <div>Učitavanje...</div>;
+  if (error) return <div style={{ color: "crimson" }}>{error}</div>;
 
   return (
-  <Layout title="Zgrade">
-    <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'grid', gap: 10 }}>
-      {buildings.map((b) => (
-        <li key={b.id}>
-            <Card>
-                <Link to={`/buildings/${b.id}`} style={{ textDecoration: 'none', color: '#111827', fontWeight: 600 }}>
-                    {b.name}
-                </Link>
-                <div style={{ color: '#6b7280', marginTop: 4 }}>{b.address}</div>
-            </Card>
-        </li>
-      ))}
-    </ul>
-  </Layout>
-);
+    <div>
+      <h2>Zgrade</h2>
+
+      {buildings.length === 0 ? (
+        <div>Nema zgrada.</div>
+      ) : (
+        <ul>
+          {buildings.map((b) => (
+            <li key={b.id} style={{ marginBottom: 8 }}>
+              <div>
+                <b>{b.name}</b> {b.address ? `— ${b.address}` : ""}
+              </div>
+              <Link to={`/buildings/${b.id}`}>Pogledaj stanove</Link>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
 }

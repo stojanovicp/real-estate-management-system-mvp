@@ -1,83 +1,137 @@
-import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
-import Layout from '../components/Layout';
-import { api } from '../api/apiClient';
+import { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
+import { api } from "../../api/apiClient";
 
 export default function ApartmentDetailsPage() {
   const { id } = useParams();
   const [apartment, setApartment] = useState(null);
-  const [error, setError] = useState('');
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [message, setMessage] = useState('');
-  const [statusMsg, setStatusMsg] = useState('');
 
-  const submitInquiry = async (e) => {
-  e.preventDefault();
-  setStatusMsg('');
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [message, setMessage] = useState("");
 
- try {
-  await api.post('/inquiries', {
-    apartmentId: Number(id),
-    name,
-    email,
-    message,
-  });
-
-  setName('');
-  setEmail('');
-  setMessage('');
-  setStatusMsg('Upit je uspešno poslat.');
-} catch (err) {
-  setStatusMsg(err.message || 'Greška pri slanju upita');
-}
-};
+  const [loading, setLoading] = useState(true);
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
   useEffect(() => {
-  api
-    .get(`/apartments/${id}`)
-    .then((data) => setApartment(data))
-    .catch(() => setError('Greška pri učitavanju stana'));
-}, [id]);
+    setLoading(true);
+    setError("");
+    setSuccess("");
 
-  
-  if (error) return <p>{error}</p>;
-  if (!apartment) return <p>Učitavanje…</p>;
+    api
+      .get(`/apartments/${id}`)
+      .then((data) => setApartment(data))
+      .catch((err) => {
+        const details = err?.status ? ` (HTTP ${err.status})` : "";
+        setError((err?.message || "Greška pri učitavanju stana") + details);
+      })
+      .finally(() => setLoading(false));
+  }, [id]);
+
+  async function onSubmit(e) {
+    e.preventDefault();
+    setError("");
+    setSuccess("");
+    setSending(true);
+
+    try {
+      await api.post("/inquiries", {
+        apartmentId: Number(id),
+        name,
+        email,
+        phone,
+        message,
+      });
+      setSuccess("Upit je poslat.");
+      setName("");
+      setEmail("");
+      setPhone("");
+      setMessage("");
+    } catch (err) {
+      setError(err?.message || "Greška pri slanju upita");
+    } finally {
+      setSending(false);
+    }
+  }
+
+  if (loading) return <div>Učitavanje...</div>;
+  if (error) return <div style={{ color: "crimson" }}>{error}</div>;
+  if (!apartment) return <div>Nije pronađen stan.</div>;
 
   return (
-  <Layout title={`Stan ${apartment.number}`}>
-    <div style={{ background: 'white', padding: 16, borderRadius: 12, border: '1px solid #e5e7eb' }}>
-      <p><strong>Površina:</strong> {apartment.area} m²</p>
-      <p><strong>Sobe:</strong> {apartment.rooms}</p>
-      <p><strong>Cena:</strong> {apartment.price} €</p>
-      <p><strong>Status:</strong> {apartment.status}</p>
-    </div>
-    <div style={{ marginTop: 16, background: 'white', padding: 16, borderRadius: 12, border: '1px solid #e5e7eb' }}>
-        <h2>Pošalji upit</h2>
+    <div>
+      <h2>Detalj stana</h2>
 
-        <form onSubmit={submitInquiry} style={{ display: 'grid', gap: 10 }}>
-            <input
-            placeholder="Ime"
+      <div style={{ marginBottom: 12 }}>
+        <div>
+          <b>Broj:</b> {apartment.number ?? apartment.id}
+        </div>
+        <div>
+          <b>Sobe:</b> {apartment.rooms}
+        </div>
+        {"price" in apartment ? (
+          <div>
+            <b>Cena:</b> {apartment.price}
+          </div>
+        ) : null}
+        {"status" in apartment ? (
+          <div>
+            <b>Status:</b> {apartment.status}
+          </div>
+        ) : null}
+      </div>
+
+      <h3>Pošalji upit</h3>
+
+      {success ? (
+        <div style={{ marginBottom: 12, color: "green" }}>{success}</div>
+      ) : null}
+
+      <form onSubmit={onSubmit} style={{ maxWidth: 520 }}>
+        <div style={{ marginBottom: 10 }}>
+          <label>Ime</label>
+          <input
+            style={{ width: "100%" }}
             value={name}
             onChange={(e) => setName(e.target.value)}
-            />
-            <input
-            placeholder="Email"
+          />
+        </div>
+
+        <div style={{ marginBottom: 10 }}>
+          <label>Email</label>
+          <input
+            style={{ width: "100%" }}
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            />
-            <textarea
-            placeholder="Poruka"
+          />
+        </div>
+
+        <div style={{ marginBottom: 10 }}>
+          <label>Telefon (opciono)</label>
+          <input
+            style={{ width: "100%" }}
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+          />
+        </div>
+
+        <div style={{ marginBottom: 10 }}>
+          <label>Poruka</label>
+          <textarea
+            style={{ width: "100%" }}
+            rows={4}
             value={message}
             onChange={(e) => setMessage(e.target.value)}
-            rows={4}
-            />
-            <button type="submit">Pošalji</button>
-        </form>
+          />
+        </div>
 
-        {statusMsg && <p style={{ marginTop: 10 }}>{statusMsg}</p>}
+        <button type="submit" disabled={sending}>
+          {sending ? "Slanje..." : "Pošalji"}
+        </button>
+      </form>
     </div>
-  </Layout>
-  
-);
+  );
 }
