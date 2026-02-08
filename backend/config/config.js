@@ -1,23 +1,20 @@
 require('dotenv').config();
 
-const dbUrl = process.env.DATABASE_URL;
-
-if (!dbUrl) {
+if (!process.env.DATABASE_URL) {
   throw new Error('DATABASE_URL nije definisan. Proveri .env u root folderu.');
 }
 
 module.exports = {
   development: {
-    url: dbUrl,
+    use_env_variable: 'DATABASE_URL',
     dialect: 'postgres'
   },
   test: {
-    url: dbUrl,
+    use_env_variable: 'DATABASE_URL',
     dialect: 'postgres'
   },
   production: {
-    url: dbUrl,
+    use_env_variable: 'DATABASE_URL',
     dialect: 'postgres'
   }
 };
-

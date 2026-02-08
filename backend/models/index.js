@@ -11,7 +11,15 @@ const db = {};
 
 let sequelize;
 if (config.use_env_variable) {
-  sequelize = new Sequelize(process.env[config.use_env_variable], config);
+  sequelize = new Sequelize(process.env[config.use_env_variable], {
+  dialect: config.dialect,
+  logging: false
+});
+} else if (process.env.DATABASE_URL) {
+  sequelize = new Sequelize(process.env.DATABASE_URL, {
+    dialect: 'postgres',
+    logging: false
+  });
 } else {
   sequelize = new Sequelize(config.database, config.username, config.password, config);
 }
