@@ -2,6 +2,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import Layout from '../components/Layout';
 import Card from '../components/Card';
+import { api } from '../api/apiClient';
 
 export default function ApartmentsPage() {
   const { id } = useParams();
@@ -11,14 +12,11 @@ export default function ApartmentsPage() {
   
 
   useEffect(() => {
-    fetch(`http://localhost:4000/api/buildings/${id}/apartments`)
-      .then((res) => {
-        if (!res.ok) throw new Error();
-        return res.json();
-      })
-      .then((data) => setApartments(data))
-      .catch(() => setError('Greška pri učitavanju stanova'));
-  }, [id]);
+  api
+    .get(`/buildings/${id}/apartments`)
+    .then((data) => setApartments(data))
+    .catch(() => setError('Greška pri učitavanju stanova'));
+}, [id]);
 
   const filteredApartments = useMemo(() => {
   return apartments.filter(a => a.rooms >= minRooms);

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import Layout from '../components/Layout';
+import { api } from '../api/apiClient';
 
 export default function ApartmentDetailsPage() {
   const { id } = useParams();
@@ -15,41 +16,29 @@ export default function ApartmentDetailsPage() {
   e.preventDefault();
   setStatusMsg('');
 
-  try {
-    const res = await fetch('http://localhost:4000/api/inquiries', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        apartmentId: Number(id),
-        name,
-        email,
-        message
-      })
-    });
+ try {
+  await api.post('/inquiries', {
+    apartmentId: Number(id),
+    name,
+    email,
+    message,
+  });
 
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err.message || 'Greška pri slanju upita');
-    }
-
-    setName('');
-    setEmail('');
-    setMessage('');
-    setStatusMsg('Upit je uspešno poslat.');
-  } catch (err) {
-    setStatusMsg(err.message || 'Greška pri slanju upita');
-  }
+  setName('');
+  setEmail('');
+  setMessage('');
+  setStatusMsg('Upit je uspešno poslat.');
+} catch (err) {
+  setStatusMsg(err.message || 'Greška pri slanju upita');
+}
 };
 
   useEffect(() => {
-    fetch(`http://localhost:4000/api/apartments/${id}`)
-      .then((res) => {
-        if (!res.ok) throw new Error();
-        return res.json();
-      })
-      .then((data) => setApartment(data))
-      .catch(() => setError('Greška pri učitavanju stana'));
-  }, [id]);
+  api
+    .get(`/apartments/${id}`)
+    .then((data) => setApartment(data))
+    .catch(() => setError('Greška pri učitavanju stana'));
+}, [id]);
 
   
   if (error) return <p>{error}</p>;

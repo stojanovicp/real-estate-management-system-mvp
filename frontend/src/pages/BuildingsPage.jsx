@@ -2,20 +2,18 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import Layout from '../components/Layout';
 import Card from '../components/Card';
+import { api } from '../api/apiClient';
 
 export default function BuildingsPage() {
   const [buildings, setBuildings] = useState([]);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    fetch('http://localhost:4000/api/buildings')
-      .then((res) => {
-        if (!res.ok) throw new Error('Ne mogu da učitam zgrade');
-        return res.json();
-      })
-      .then((data) => setBuildings(data))
-      .catch(() => setError('Greška pri učitavanju zgrada'));
-  }, []);
+  api
+    .get('/buildings')
+    .then((data) => setBuildings(data))
+    .catch(() => setError('Greška pri učitavanju zgrada'));
+}, []);
 
   if (error) return <p>{error}</p>;
 
