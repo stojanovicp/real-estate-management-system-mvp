@@ -6,8 +6,12 @@ const requireRole = require('../middleware/requireRole');
 const asyncHandler = require('../middleware/asyncHandler');
 const { Inquiry, Apartment, Building, Reservation } = require('../../models');
 
-
-router.get('/inquiries',auth, requireRole('admin'), asyncHandler(async (req, res) => {
+// -------------------- INQUIRIES (READ) --------------------
+router.get(
+  '/inquiries',
+  auth,
+  requireRole('admin'),
+  asyncHandler(async (req, res) => {
     const inquiries = await Inquiry.findAll({
       include: {
         model: Apartment,
@@ -22,6 +26,7 @@ router.get('/inquiries',auth, requireRole('admin'), asyncHandler(async (req, res
   })
 );
 
+// -------------------- BUILDINGS --------------------
 router.get(
   '/buildings',
   auth,
@@ -42,17 +47,16 @@ router.post(
   asyncHandler(async (req, res) => {
     const { name, address } = req.body;
 
-    if (!name || !address) {
-      return res.status(400).json({
-        message: 'Naziv i adresa su obavezni'
-      });
-    }
-
-    const building = await Building.create({ name, address });
+    // Po zahtevu: nullable polja nisu obavezna; ako nisu poslata -> null
+    const building = await Building.create({
+      name: name ?? null,
+      address: address ?? null
+    });
 
     res.status(201).json(building);
   })
 );
+
 router.put(
   '/buildings/:id',
   auth,
@@ -62,19 +66,19 @@ router.put(
     const { name, address } = req.body;
 
     const building = await Building.findByPk(id);
-
     if (!building) {
       return res.status(404).json({ message: 'Zgrada ne postoji' });
     }
 
-    building.name = name ?? building.name;
-    building.address = address ?? building.address;
+    // Menjaj samo ako je poslato (dozvoljava i null)
+    if (name !== undefined) building.name = name;
+    if (address !== undefined) building.address = address;
 
     await building.save();
-
     res.json(building);
   })
 );
+
 router.delete(
   '/buildings/:id',
   auth,
@@ -83,17 +87,26 @@ router.delete(
     const { id } = req.params;
 
     const building = await Building.findByPk(id);
-
     if (!building) {
       return res.status(404).json({ message: 'Zgrada ne postoji' });
     }
 
-    await building.destroy();
-
-    res.json({ message: 'Zgrada uspešno obrisana' });
+    try {
+      await building.destroy();
+      return res.json({ message: 'Zgrada uspešno obrisana' });
+    } catch (err) {
+      // FK RESTRICT: ne može obrisati building dok postoje apartments
+      if (err?.name === 'SequelizeForeignKeyConstraintError') {
+        return res.status(409).json({
+          message: 'Ne možete obrisati zgradu dok postoje stanovi u njoj'
+        });
+      }
+      throw err;
+    }
   })
 );
 
+// -------------------- APARTMENTS --------------------
 router.get(
   '/apartments',
   auth,
@@ -119,30 +132,35 @@ router.post(
   auth,
   requireRole('admin'),
   asyncHandler(async (req, res) => {
-    const { buildingId, number, price, status } = req.body;
+    const { buildingId, number, floor, rooms, area, price, status } = req.body;
 
-    if (!buildingId || !number || price == null || !status) {
-      return res.status(400).json({
-        message: 'buildingId, number, price i status su obavezni'
-      });
+    // buildingId je NOT NULL u bazi
+    if (!buildingId) {
+      return res.status(400).json({ message: 'buildingId je obavezan' });
     }
 
-    const allowedApartmentStatuses = ['available', 'reserved', 'sold'];
-    if (!allowedApartmentStatuses.includes(status)) {
-      return res.status(400).json({ message: 'Neispravan status stana' });
-    }
-
-    // Provera da li zgrada postoji (FK logika na nivou aplikacije)
+    // Provera FK (building mora postojati)
     const building = await Building.findByPk(buildingId);
     if (!building) {
       return res.status(400).json({ message: 'Ne postoji zgrada sa datim buildingId' });
     }
 
+    // status je nullable, ali ako je poslat i nije null -> mora biti validan
+    if (status !== undefined && status !== null) {
+      const allowedApartmentStatuses = ['available', 'reserved', 'sold'];
+      if (!allowedApartmentStatuses.includes(status)) {
+        return res.status(400).json({ message: 'Neispravan status stana' });
+      }
+    }
+
     const apartment = await Apartment.create({
       buildingId,
-      number,
-      price,
-      status
+      number: number ?? null,
+      floor: floor ?? null,
+      rooms: rooms ?? null,
+      area: area ?? null,
+      price: price ?? null,
+      status: status ?? null
     });
 
     res.status(201).json(apartment);
@@ -155,15 +173,18 @@ router.put(
   requireRole('admin'),
   asyncHandler(async (req, res) => {
     const { id } = req.params;
-    const { buildingId, number, price, status } = req.body;
+    const { buildingId, number, floor, rooms, area, price, status } = req.body;
 
     const apartment = await Apartment.findByPk(id);
     if (!apartment) {
       return res.status(404).json({ message: 'Stan ne postoji' });
     }
 
-    // Ako se menja buildingId, proveri da li zgrada postoji
-    if (buildingId != null) {
+    // buildingId: ako je poslat, ne sme biti null (NOT NULL u bazi)
+    if (buildingId !== undefined) {
+      if (buildingId === null) {
+        return res.status(400).json({ message: 'buildingId ne može biti null' });
+      }
       const building = await Building.findByPk(buildingId);
       if (!building) {
         return res.status(400).json({ message: 'Ne postoji zgrada sa datim buildingId' });
@@ -171,19 +192,24 @@ router.put(
       apartment.buildingId = buildingId;
     }
 
-    apartment.number = number ?? apartment.number;
-    apartment.price = price ?? apartment.price;
+    // Ostala polja su nullable -> menjaj samo ako su poslata (dozvoljava i null)
+    if (number !== undefined) apartment.number = number;
+    if (floor !== undefined) apartment.floor = floor;
+    if (rooms !== undefined) apartment.rooms = rooms;
+    if (area !== undefined) apartment.area = area;
+    if (price !== undefined) apartment.price = price;
 
-    if (status != null) {
-      const allowedApartmentStatuses = ['available', 'reserved', 'sold'];
-      if (!allowedApartmentStatuses.includes(status)) {
-        return res.status(400).json({ message: 'Neispravan status stana' });
+    if (status !== undefined) {
+      if (status !== null) {
+        const allowedApartmentStatuses = ['available', 'reserved', 'sold'];
+        if (!allowedApartmentStatuses.includes(status)) {
+          return res.status(400).json({ message: 'Neispravan status stana' });
+        }
       }
+      apartment.status = status;
     }
-    apartment.status = status ?? apartment.status;
 
     await apartment.save();
-
     res.json(apartment);
   })
 );
@@ -200,12 +226,22 @@ router.delete(
       return res.status(404).json({ message: 'Stan ne postoji' });
     }
 
-    await apartment.destroy();
-
-    res.json({ message: 'Stan uspešno obrisan' });
+    try {
+      await apartment.destroy();
+      return res.json({ message: 'Stan uspešno obrisan' });
+    } catch (err) {
+      // FK RESTRICT: ne može obrisati apartment dok postoje reservations
+      if (err?.name === 'SequelizeForeignKeyConstraintError') {
+        return res.status(409).json({
+          message: 'Ne možete obrisati stan dok postoje rezervacije za njega'
+        });
+      }
+      throw err;
+    }
   })
 );
 
+// -------------------- RESERVATIONS --------------------
 router.get(
   '/reservations',
   auth,
@@ -238,14 +274,9 @@ router.post(
   asyncHandler(async (req, res) => {
     const { apartmentId, startDate, endDate, status } = req.body;
 
-    if (!apartmentId || !startDate || !endDate || !status) {
-      return res.status(400).json({
-        message: 'apartmentId, startDate, endDate i status su obavezni'
-      });
-    }
-    const allowedReservationStatuses = ['active', 'canceled', 'expired'];
-    if (!allowedReservationStatuses.includes(status)) {
-      return res.status(400).json({ message: 'Neispravan status rezervacije' });
+    // apartmentId je NOT NULL u bazi
+    if (!apartmentId) {
+      return res.status(400).json({ message: 'apartmentId je obavezan' });
     }
 
     const apartment = await Apartment.findByPk(apartmentId);
@@ -253,7 +284,15 @@ router.post(
       return res.status(400).json({ message: 'Stan ne postoji' });
     }
 
-    // zabrana vise aktivnih rezervacija za isti stan
+    // status je nullable, ali ako je poslat i nije null -> validiraj
+    if (status !== undefined && status !== null) {
+      const allowedReservationStatuses = ['active', 'canceled', 'expired'];
+      if (!allowedReservationStatuses.includes(status)) {
+        return res.status(400).json({ message: 'Neispravan status rezervacije' });
+      }
+    }
+
+    // zabrana vise aktivnih rezervacija za isti stan (samo ako se eksplicitno pravi active)
     if (status === 'active') {
       const existingActive = await Reservation.findOne({
         where: { apartmentId, status: 'active' }
@@ -268,9 +307,9 @@ router.post(
 
     const reservation = await Reservation.create({
       apartmentId,
-      startDate,
-      endDate,
-      status
+      startDate: startDate ?? null,
+      endDate: endDate ?? null,
+      status: status ?? null
     });
 
     res.status(201).json(reservation);
@@ -290,35 +329,35 @@ router.put(
       return res.status(404).json({ message: 'Rezervacija ne postoji' });
     }
 
-    reservation.startDate = startDate ?? reservation.startDate;
-    reservation.endDate = endDate ?? reservation.endDate;
+    // nullable -> menjaj samo ako je poslato
+    if (startDate !== undefined) reservation.startDate = startDate;
+    if (endDate !== undefined) reservation.endDate = endDate;
 
-    // validacija statusa ako je poslat
-    if (status != null) {
-      const allowedReservationStatuses = ['active', 'canceled', 'expired'];
-      if (!allowedReservationStatuses.includes(status)) {
-        return res.status(400).json({ message: 'Neispravan status rezervacije' });
+    if (status !== undefined) {
+      if (status !== null) {
+        const allowedReservationStatuses = ['active', 'canceled', 'expired'];
+        if (!allowedReservationStatuses.includes(status)) {
+          return res.status(400).json({ message: 'Neispravan status rezervacije' });
+        }
       }
-    }
 
-    // zabrana da vise rezervacija za isti stan bude aktivno
-    if (status != null && status === 'active' && reservation.status !== 'active') {
-      const existingActive = await Reservation.findOne({
-        where: { apartmentId: reservation.apartmentId, status: 'active' }
-      });
-
-      if (existingActive) {
-        return res.status(409).json({
-          message: 'Vec postoji aktivna rezervacija za ovaj stan'
+      // zabrana da vise rezervacija za isti stan bude aktivno
+      if (status === 'active' && reservation.status !== 'active') {
+        const existingActive = await Reservation.findOne({
+          where: { apartmentId: reservation.apartmentId, status: 'active' }
         });
+
+        if (existingActive) {
+          return res.status(409).json({
+            message: 'Vec postoji aktivna rezervacija za ovaj stan'
+          });
+        }
       }
+
+      reservation.status = status;
     }
-
-    reservation.status = status ?? reservation.status;
-
 
     await reservation.save();
-
     res.json(reservation);
   })
 );
@@ -336,7 +375,6 @@ router.delete(
     }
 
     await reservation.destroy();
-
     res.json({ message: 'Rezervacija uspešno obrisana' });
   })
 );

@@ -13,17 +13,17 @@ router.get(
   asyncHandler(async (req, res) => {
     const inquiries = await Inquiry.findAll({
       include: {
-            model: Apartment,
-            as: 'apartment',
-            required: false,
-            attributes: ['id', 'number'],
-            include: {
-                model: Building,
-                as: 'building',
-                required: false,
-                attributes: ['id', 'name']
-            }
-        },
+        model: Apartment,
+        as: 'apartment',
+        required: false,
+        attributes: ['id', 'number'],
+        include: {
+          model: Building,
+          as: 'building',
+          required: false,
+          attributes: ['id', 'name']
+        }
+      },
       order: [['createdAt', 'DESC']]
     });
 
@@ -84,22 +84,30 @@ router.put(
   requireRole(['owner', 'admin']),
   asyncHandler(async (req, res) => {
     const { id } = req.params;
-    const { number, price, status } = req.body;
+    const { number, floor, rooms, area, price, status } = req.body;
 
     const apartment = await Apartment.findByPk(id);
     if (!apartment) {
       return res.status(404).json({ message: 'Stan ne postoji' });
     }
 
-    apartment.number = number ?? apartment.number;
-    apartment.price = price ?? apartment.price;
-    if (status != null) {
+    // Menjaj samo ako je polje poslato (dozvoljava i null)
+    if (number !== undefined) apartment.number = number;
+    if (floor !== undefined) apartment.floor = floor;
+    if (rooms !== undefined) apartment.rooms = rooms;
+    if (area !== undefined) apartment.area = area;
+    if (price !== undefined) apartment.price = price;
+
+    if (status !== undefined) {
+      // status je nullable; validiraj samo ako nije null
+      if (status !== null) {
         const allowedApartmentStatuses = ['available', 'reserved', 'sold'];
         if (!allowedApartmentStatuses.includes(status)) {
-            return res.status(400).json({ message: 'Neispravan status stana' });
+          return res.status(400).json({ message: 'Neispravan status stana' });
         }
+      }
+      apartment.status = status; // prihvata i null
     }
-    apartment.status = status ?? apartment.status;
 
     await apartment.save();
     res.json(apartment);
