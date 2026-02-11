@@ -2,12 +2,20 @@ import { useEffect, useMemo, useState } from "react";
 import { api } from "../../api/apiClient";
 import { getRole } from "../../auth/authService";
 import DataTable from "../../components/DataTable";
+import ApiState from "../../components/ApiState";
 
 function endpointForRole(role) {
   if (role === "admin") return "/admin/inquiries";
   if (role === "owner") return "/owner/inquiries";
   if (role === "staff") return "/staff/inquiries";
   return null;
+}
+
+function formatDateOnly(value) {
+  if (!value) return "—";
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return String(value);
+  return d.toLocaleDateString("sr-RS");
 }
 
 export default function InquiriesAppPage() {
@@ -43,18 +51,32 @@ export default function InquiriesAppPage() {
       { key: "phone", header: "Telefon" },
       { key: "message", header: "Poruka" },
       { key: "apartmentId", header: "StanID" },
-      { key: "createdAt", header: "Kreirano" },
+      {
+        key: "createdAt",
+        header: "Kreirano",
+        render: (r) => formatDateOnly(r.createdAt),
+      },
     ],
     []
   );
 
-  if (loading) return <div>Učitavanje...</div>;
-  if (error) return <div style={{ color: "crimson" }}>{error}</div>;
-
   return (
     <div>
-      <h2>Upiti</h2>
-      <DataTable columns={columns} rows={rows} />
+      <div className="page-head">
+        <div>
+          <h2 className="page-title">Upiti</h2>
+          <p className="page-sub">Pregled upita (admin/owner/staff).</p>
+        </div>
+      </div>
+
+      <ApiState
+        loading={loading}
+        error={error}
+        empty={rows.length === 0}
+        emptyText="Nema upita."
+      >
+        <DataTable columns={columns} rows={rows} />
+      </ApiState>
     </div>
   );
 }

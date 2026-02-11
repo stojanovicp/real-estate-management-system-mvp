@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../../api/apiClient";
+import ApiState from "../../components/ApiState";
 
 export default function BuildingsPage() {
   const [buildings, setBuildings] = useState([]);
@@ -21,21 +22,21 @@ export default function BuildingsPage() {
       .finally(() => setLoading(false));
   }, []);
 
-  if (loading) return <div>Učitavanje...</div>;
-  if (error) return <div className="error">{error}</div>;
-
   return (
-    <div>
-      <div className="page-head">
-        <div>
-          <h2 className="page-title">Zgrade</h2>
-          <p className="page-sub">Izaberi zgradu da vidiš dostupne stanove.</p>
+    <ApiState
+      loading={loading}
+      error={error}
+      empty={buildings.length === 0}
+      emptyText="Nema dostupnih zgrada."
+    >
+      <div>
+        <div className="page-head">
+          <div>
+            <h2 className="page-title">Zgrade</h2>
+            <p className="page-sub">Izaberi zgradu da vidiš dostupne stanove.</p>
+          </div>
         </div>
-      </div>
 
-      {buildings.length === 0 ? (
-        <div className="card">Nema dostupnih zgrada.</div>
-      ) : (
         <div className="grid grid-2">
           {buildings.map((b) => (
             <div className="card" key={b.id}>
@@ -56,7 +57,7 @@ export default function BuildingsPage() {
             </div>
           ))}
         </div>
-      )}
-    </div>
+      </div>
+    </ApiState>
   );
 }

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { api } from "../../api/apiClient";
+import ApiState from "../../components/ApiState";
 
 function badgeClassForStatus(status) {
   const s = String(status || "").toLowerCase();
@@ -72,100 +73,106 @@ export default function ApartmentDetailsPage() {
     }
   }
 
-  if (loading) return <div>Učitavanje...</div>;
-  if (error) return <div className="error">{error}</div>;
-  if (!apartment) return <div className="card">Stan nije pronađen.</div>;
-
   return (
-    <div>
-      <div className="page-head">
-        <div>
-          <h2 className="page-title">Detalji stana</h2>
-          <p className="page-sub">Pregled podataka i slanje upita.</p>
-        </div>
+    <ApiState
+      loading={loading}
+      error={error}
+      empty={!apartment}
+      emptyText="Stan nije pronađen."
+    >
+      <div>
+        <div className="page-head">
+          <div>
+            <h2 className="page-title">Detalji stana</h2>
+            <p className="page-sub">Pregled podataka i slanje upita.</p>
+          </div>
 
-        <div>
-          <Link className="link" to={`/buildings/${apartment.buildingId}`}>
-            ← Nazad na stanove
-          </Link>
-        </div>
-      </div>
-
-      <div className="grid grid-2">
-        <div className="card">
-          <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
-            <div>
-              <div style={{ fontWeight: 800, fontSize: 18, marginBottom: 6 }}>
-                Stan #{apartment.number ?? apartment.id}
-              </div>
-              <div className="muted">
-                {apartment.rooms != null ? `${apartment.rooms} soba` : "Sobe: -"} •{" "}
-                Sprat: {apartment.floor ?? "-"} •{" "}
-                {apartment.area ? `${apartment.area} m²` : "Površina: -"}
-              </div>
-
-              <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 12 }}>
-                <span className={badgeClassForStatus(apartment.status)}>
-                  {apartment.status || "N/A"}
-                </span>
-                <span className="badge">
-                  {apartment.price != null ? `${apartment.price} €` : "Cena: -"}
-                </span>
-              </div>
-            </div>
+          <div>
+            <Link className="link" to={`/buildings/${apartment?.buildingId}`}>
+              ← Nazad na stanove
+            </Link>
           </div>
         </div>
 
-        <div className="card">
-          <h3 style={{ marginTop: 0 }}>Pošalji upit</h3>
+        <div className="grid grid-2">
+          <div className="card">
+            <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
+              <div>
+                <div style={{ fontWeight: 800, fontSize: 18, marginBottom: 6 }}>
+                  Stan #{apartment?.number ?? apartment?.id}
+                </div>
+                <div className="muted">
+                  {apartment?.rooms != null ? `${apartment.rooms} soba` : "Sobe: -"} •{" "}
+                  Sprat: {apartment?.floor ?? "-"} •{" "}
+                  {apartment?.area ? `${apartment.area} m²` : "Površina: -"}
+                </div>
 
-          {statusMsg ? (
-            <div className={statusType === "success" ? "success" : "error"} style={{ marginBottom: 10 }}>
-              {statusMsg}
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 12 }}>
+                  <span className={badgeClassForStatus(apartment?.status)}>
+                    {apartment?.status || "N/A"}
+                  </span>
+                  <span className="badge">
+                    {apartment?.price != null ? `${apartment.price} €` : "Cena: -"}
+                  </span>
+                </div>
+              </div>
             </div>
-          ) : null}
+          </div>
 
-          <form onSubmit={submitInquiry}>
-            <div style={{ marginBottom: 10 }}>
-              <label style={{ display: "block", marginBottom: 6, fontWeight: 600 }}>Ime</label>
-              <input
-                className="input"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Unesi ime"
-                disabled={sending}
-              />
-            </div>
+          <div className="card">
+            <h3 style={{ marginTop: 0 }}>Pošalji upit</h3>
 
-            <div style={{ marginBottom: 10 }}>
-              <label style={{ display: "block", marginBottom: 6, fontWeight: 600 }}>Email</label>
-              <input
-                className="input"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="npr. petar@email.com"
-                disabled={sending}
-              />
-            </div>
+            {statusMsg ? (
+              <div
+                className={statusType === "success" ? "success" : "error"}
+                style={{ marginBottom: 10 }}
+              >
+                {statusMsg}
+              </div>
+            ) : null}
 
-            <div style={{ marginBottom: 10 }}>
-              <label style={{ display: "block", marginBottom: 6, fontWeight: 600 }}>Poruka</label>
-              <textarea
-                className="textarea"
-                rows={4}
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                placeholder="Napiši pitanje ili zahtev..."
-                disabled={sending}
-              />
-            </div>
+            <form onSubmit={submitInquiry}>
+              <div style={{ marginBottom: 10 }}>
+                <label style={{ display: "block", marginBottom: 6, fontWeight: 600 }}>Ime</label>
+                <input
+                  className="input"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Unesi ime"
+                  disabled={sending}
+                />
+              </div>
 
-            <button className="btn btn-primary" type="submit" disabled={sending}>
-              {sending ? "Slanje..." : "Pošalji upit"}
-            </button>
-          </form>
+              <div style={{ marginBottom: 10 }}>
+                <label style={{ display: "block", marginBottom: 6, fontWeight: 600 }}>Email</label>
+                <input
+                  className="input"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="npr. petar@email.com"
+                  disabled={sending}
+                />
+              </div>
+
+              <div style={{ marginBottom: 10 }}>
+                <label style={{ display: "block", marginBottom: 6, fontWeight: 600 }}>Poruka</label>
+                <textarea
+                  className="textarea"
+                  rows={4}
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  placeholder="Napiši pitanje ili zahtev..."
+                  disabled={sending}
+                />
+              </div>
+
+              <button className="btn btn-primary" type="submit" disabled={sending}>
+                {sending ? "Slanje..." : "Pošalji upit"}
+              </button>
+            </form>
+          </div>
         </div>
       </div>
-    </div>
+    </ApiState>
   );
 }

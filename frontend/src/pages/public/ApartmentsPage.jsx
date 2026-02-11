@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { api } from "../../api/apiClient";
+import ApiState from "../../components/ApiState";
 
 function badgeClassForStatus(status) {
   const s = String(status || "").toLowerCase();
@@ -37,33 +38,33 @@ export default function ApartmentsPage() {
     return apartments.filter((a) => Number(a.rooms) >= n);
   }, [apartments, minRooms]);
 
-  if (loading) return <div>Učitavanje...</div>;
-  if (error) return <div className="error">{error}</div>;
-
   return (
-    <div>
-      <div className="page-head">
-        <div>
-          <h2 className="page-title">Stanovi</h2>
-          <p className="page-sub">Filtriraj po broju soba i otvori detalje stana.</p>
+    <ApiState
+      loading={loading}
+      error={error}
+      empty={filtered.length === 0}
+      emptyText="Nema stanova."
+    >
+      <div>
+        <div className="page-head">
+          <div>
+            <h2 className="page-title">Stanovi</h2>
+            <p className="page-sub">Filtriraj po broju soba i otvori detalje stana.</p>
+          </div>
+
+          <div style={{ width: 220 }}>
+            <label className="muted" style={{ display: "block", marginBottom: 6, fontSize: 13 }}>
+              Min soba
+            </label>
+            <input
+              className="input"
+              value={minRooms}
+              onChange={(e) => setMinRooms(e.target.value)}
+              placeholder="npr. 2"
+            />
+          </div>
         </div>
 
-        <div style={{ width: 220 }}>
-          <label className="muted" style={{ display: "block", marginBottom: 6, fontSize: 13 }}>
-            Min soba
-          </label>
-          <input
-            className="input"
-            value={minRooms}
-            onChange={(e) => setMinRooms(e.target.value)}
-            placeholder="npr. 2"
-          />
-        </div>
-      </div>
-
-      {filtered.length === 0 ? (
-        <div className="card">Nema stanova.</div>
-      ) : (
         <div className="grid grid-2">
           {filtered.map((a) => (
             <div className="card" key={a.id}>
@@ -73,7 +74,7 @@ export default function ApartmentsPage() {
                     Stan #{a.number ?? a.id}
                   </div>
                   <div className="muted">
-                    {a.rooms} soba{Number(a.rooms) === 1 ? "" : ""} • Sprat: {a.floor ?? "-"} • {a.area ? `${a.area} m²` : "Površina: -"}
+                    {a.rooms} • Sprat: {a.floor ?? "-"} • {a.area ? `${a.area} m²` : "Površina: -"}
                   </div>
 
                   <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 10 }}>
@@ -91,7 +92,7 @@ export default function ApartmentsPage() {
             </div>
           ))}
         </div>
-      )}
-    </div>
+      </div>
+    </ApiState>
   );
 }

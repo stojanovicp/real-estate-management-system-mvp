@@ -3,6 +3,7 @@ import { api } from "../../api/apiClient";
 import { getRole } from "../../auth/authService";
 import DataTable from "../../components/DataTable";
 import EntityForm from "../../components/EntityForm";
+import ApiState from "../../components/ApiState";
 
 function endpointForRole(role) {
   if (role === "admin") return "/admin/reservations";
@@ -21,6 +22,14 @@ function badgeClassForReservationStatus(status) {
 function normalizeNullableText(v) {
   const s = String(v ?? "").trim();
   return s === "" ? null : s;
+}
+
+function formatDateOnly(value) {
+  if (!value) return "—";
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return String(value);
+  // lokalni format datuma (bez vremena)
+  return d.toLocaleDateString("sr-RS");
 }
 
 export default function ReservationsAppPage() {
@@ -76,8 +85,16 @@ export default function ReservationsAppPage() {
           return `${aptId}${aptNo}${bName}`;
         },
       },
-      { key: "startDate", header: "Od" },
-      { key: "endDate", header: "Do" },
+      {
+        key: "startDate",
+        header: "Od",
+        render: (r) => formatDateOnly(r.startDate),
+      },
+      {
+        key: "endDate",
+        header: "Do",
+        render: (r) => formatDateOnly(r.endDate),
+      },
       {
         key: "status",
         header: "Status",
@@ -85,7 +102,11 @@ export default function ReservationsAppPage() {
           <span className={badgeClassForReservationStatus(r.status)}>{r.status || "N/A"}</span>
         ),
       },
-      { key: "createdAt", header: "Kreirano" },
+      {
+        key: "createdAt",
+        header: "Kreirano",
+        render: (r) => formatDateOnly(r.createdAt),
+      },
     ],
     []
   );
@@ -156,7 +177,7 @@ export default function ReservationsAppPage() {
         apartmentId,
         startDate: normalizeNullableText(values.startDate),
         endDate: normalizeNullableText(values.endDate),
-        status: normalizeNullableText(values.status), // active/canceled/expired ili null
+        status: normalizeNullableText(values.status),
       });
 
       await load();
@@ -169,7 +190,6 @@ export default function ReservationsAppPage() {
     async (values) => {
       if (!selected?.id) throw new Error("Nema selektovane rezervacije.");
 
-      // backend PUT ne prima apartmentId, samo startDate/endDate/status
       await api.put(`/admin/reservations/${selected.id}`, {
         startDate: normalizeNullableText(values.startDate),
         endDate: normalizeNullableText(values.endDate),
@@ -181,9 +201,6 @@ export default function ReservationsAppPage() {
     },
     [selected, load, reset]
   );
-
-  if (loading) return <div>Učitavanje...</div>;
-  if (error) return <div className="error">{error}</div>;
 
   return (
     <div>
@@ -200,36 +217,43 @@ export default function ReservationsAppPage() {
         ) : null}
       </div>
 
-      {mode === "list" ? (
-        <DataTable columns={columns} rows={rows} actions={actions} />
-      ) : mode === "create" ? (
-        <EntityForm
-          title="Nova rezervacija"
-          fields={createFields}
-          initialValues={{
-            apartmentId: "",
-            startDate: "",
-            endDate: "",
-            status: "active",
-          }}
-          onSubmit={create}
-          onCancel={reset}
-          submitLabel="Kreiraj"
-        />
-      ) : (
-        <EntityForm
-          title={`Izmena rezervacije #${selected?.id}`}
-          fields={editFields}
-          initialValues={{
-            startDate: selected?.startDate ?? "",
-            endDate: selected?.endDate ?? "",
-            status: selected?.status ?? "",
-          }}
-          onSubmit={update}
-          onCancel={reset}
-          submitLabel="Sačuvaj"
-        />
-      )}
+      <ApiState
+        loading={loading}
+        error={error}
+        empty={mode === "list" && rows.length === 0}
+        emptyText="Nema rezervacija."
+      >
+        {mode === "list" ? (
+          <DataTable columns={columns} rows={rows} actions={actions} />
+        ) : mode === "create" ? (
+          <EntityForm
+            title="Nova rezervacija"
+            fields={createFields}
+            initialValues={{
+              apartmentId: "",
+              startDate: "",
+              endDate: "",
+              status: "active",
+            }}
+            onSubmit={create}
+            onCancel={reset}
+            submitLabel="Kreiraj"
+          />
+        ) : (
+          <EntityForm
+            title={`Izmena rezervacije #${selected?.id}`}
+            fields={editFields}
+            initialValues={{
+              startDate: selected?.startDate ?? "",
+              endDate: selected?.endDate ?? "",
+              status: selected?.status ?? "",
+            }}
+            onSubmit={update}
+            onCancel={reset}
+            submitLabel="Sačuvaj"
+          />
+        )}
+      </ApiState>
     </div>
   );
 }
