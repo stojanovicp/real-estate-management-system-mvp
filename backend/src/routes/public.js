@@ -58,33 +58,31 @@ router.get('/apartments/:id', asyncHandler(async (req, res) => {
 router.post('/inquiries', asyncHandler(async (req, res) => {
   const { apartmentId, name, email, phone, message } = req.body;
 
-  // Obavezno: name, email, message. apartmentId je opcion (opsti upit).
+  if (!apartmentId) {
+    return res.status(400).json({ message: 'apartmentId je obavezan' });
+  }
+
   if (!name || !email || !message) {
     return res.status(400).json({ message: 'Polja name, email i message su obavezna' });
   }
 
-  // Ako je apartmentId poslat (nije null/undefined/prazno), proveri da stan postoji.
-  let resolvedApartmentId = null;
-  if (apartmentId !== undefined && apartmentId !== null && apartmentId !== '') {
-    const idNum = Number(apartmentId);
-    if (Number.isNaN(idNum) || idNum <= 0) {
-      return res.status(400).json({ message: 'apartmentId mora biti pozitivan broj' });
-    }
+  const idNum = Number(apartmentId);
+  if (Number.isNaN(idNum) || idNum <= 0) {
+    return res.status(400).json({ message: 'apartmentId mora biti pozitivan broj' });
+  }
 
-    const apartment = await Apartment.findByPk(idNum);
-    if (!apartment) {
-      return res.status(404).json({ message: 'Stan nije pronađen' });
-    }
-
-    resolvedApartmentId = idNum;
+  const apartment = await Apartment.findByPk(idNum);
+  if (!apartment) {
+    return res.status(404).json({ message: 'Stan nije pronađen' });
   }
 
   const inquiry = await Inquiry.create({
-    apartmentId: resolvedApartmentId,
+    apartmentId: idNum,
     name,
     email,
     phone: phone ?? null,
-    message
+    message,
+    status: 'NEW'
   });
 
   res.status(201).json(inquiry);

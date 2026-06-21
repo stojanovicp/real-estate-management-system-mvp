@@ -6,7 +6,7 @@ const requireRole = require('../middleware/requireRole');
 const asyncHandler = require('../middleware/asyncHandler');
 const { Inquiry, Apartment, Building, Reservation } = require('../../models');
 
-// -------------------- INQUIRIES (READ) --------------------
+// -------------------- INQUIRIES --------------------
 router.get(
   '/inquiries',
   auth,
@@ -17,12 +17,70 @@ router.get(
         model: Apartment,
         as: 'apartment',
         required: false,
-        attributes: ['id', 'number']
+        attributes: ['id', 'number'],
+        include: {
+          model: Building,
+          as: 'building',
+          required: false,
+          attributes: ['id', 'name']
+        }
       },
       order: [['createdAt', 'DESC']]
     });
 
     res.json(inquiries);
+  })
+);
+
+router.get(
+  '/inquiries/:id',
+  auth,
+  requireRole('ADMIN'),
+  asyncHandler(async (req, res) => {
+    const inquiry = await Inquiry.findByPk(req.params.id, {
+      include: {
+        model: Apartment,
+        as: 'apartment',
+        required: false,
+        attributes: ['id', 'number'],
+        include: {
+          model: Building,
+          as: 'building',
+          required: false,
+          attributes: ['id', 'name', 'address']
+        }
+      }
+    });
+
+    if (!inquiry) {
+      return res.status(404).json({ message: 'Upit nije pronađen' });
+    }
+
+    res.json(inquiry);
+  })
+);
+
+router.patch(
+  '/inquiries/:id/status',
+  auth,
+  requireRole('ADMIN'),
+  asyncHandler(async (req, res) => {
+    const { status } = req.body;
+    const allowedStatuses = ['NEW', 'CONTACTED', 'CLOSED'];
+
+    if (!status || !allowedStatuses.includes(status)) {
+      return res.status(400).json({ message: 'Neispravan status. Dozvoljeno: NEW, CONTACTED, CLOSED' });
+    }
+
+    const inquiry = await Inquiry.findByPk(req.params.id);
+    if (!inquiry) {
+      return res.status(404).json({ message: 'Upit nije pronađen' });
+    }
+
+    inquiry.status = status;
+    await inquiry.save();
+
+    res.json(inquiry);
   })
 );
 
