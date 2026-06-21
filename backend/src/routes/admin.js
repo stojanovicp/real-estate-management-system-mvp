@@ -45,12 +45,17 @@ router.post(
   auth,
   requireRole('ADMIN'),
   asyncHandler(async (req, res) => {
-    const { name, address } = req.body;
+    const { name, address, city, description, latitude, longitude, imageUrl, isActive } = req.body;
 
-    // Po zahtevu: nullable polja nisu obavezna; ako nisu poslata -> null
     const building = await Building.create({
       name: name ?? null,
-      address: address ?? null
+      address: address ?? null,
+      city: city ?? '',
+      description: description ?? null,
+      latitude: latitude ?? null,
+      longitude: longitude ?? null,
+      imageUrl: imageUrl ?? null,
+      isActive: isActive !== undefined ? Boolean(isActive) : true
     });
 
     res.status(201).json(building);
@@ -63,16 +68,21 @@ router.put(
   requireRole('ADMIN'),
   asyncHandler(async (req, res) => {
     const { id } = req.params;
-    const { name, address } = req.body;
+    const { name, address, city, description, latitude, longitude, imageUrl, isActive } = req.body;
 
     const building = await Building.findByPk(id);
     if (!building) {
       return res.status(404).json({ message: 'Zgrada ne postoji' });
     }
 
-    // Menjaj samo ako je poslato (dozvoljava i null)
     if (name !== undefined) building.name = name;
     if (address !== undefined) building.address = address;
+    if (city !== undefined) building.city = city;
+    if (description !== undefined) building.description = description;
+    if (latitude !== undefined) building.latitude = latitude;
+    if (longitude !== undefined) building.longitude = longitude;
+    if (imageUrl !== undefined) building.imageUrl = imageUrl;
+    if (isActive !== undefined) building.isActive = Boolean(isActive);
 
     await building.save();
     res.json(building);

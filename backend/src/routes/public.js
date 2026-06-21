@@ -6,8 +6,23 @@ const router = express.Router();
 
 // GET /api/buildings
 router.get('/buildings', asyncHandler(async (req, res) => {
-  const buildings = await Building.findAll();
+  const buildings = await Building.findAll({
+    where: { isActive: true },
+    order: [['createdAt', 'DESC']]
+  });
   res.json(buildings);
+}));
+
+// GET /api/buildings/:id
+router.get('/buildings/:id', asyncHandler(async (req, res) => {
+  const id = Number(req.params.id);
+
+  const building = await Building.findOne({ where: { id, isActive: true } });
+  if (!building) {
+    return res.status(404).json({ message: 'Zgrada nije pronađena' });
+  }
+
+  res.json(building);
 }));
 
 // GET /api/buildings/:id/apartments
