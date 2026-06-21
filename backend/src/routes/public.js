@@ -54,6 +54,36 @@ router.get('/apartments/:id', asyncHandler(async (req, res) => {
   res.json(data);
 }));
 
+// GET /api/exchange-rate
+router.get('/exchange-rate', asyncHandler(async (req, res) => {
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5000);
+
+    const response = await fetch(
+      'https://api.frankfurter.dev/v2/latest?base=EUR&symbols=RSD',
+      { signal: controller.signal }
+    );
+    clearTimeout(timeout);
+
+    if (!response.ok) {
+      return res.status(503).json({ message: 'Kurs nije dostupan' });
+    }
+
+    const data = await response.json();
+    const rate = data.rates?.RSD;
+    const date = data.date;
+
+    if (!rate || !date) {
+      return res.status(503).json({ message: 'Kurs nije dostupan' });
+    }
+
+    res.json({ rate, date });
+  } catch {
+    res.status(503).json({ message: 'Kurs nije dostupan' });
+  }
+}));
+
 // POST /api/inquiries
 router.post('/inquiries', asyncHandler(async (req, res) => {
   const { apartmentId, name, email, phone, message } = req.body;

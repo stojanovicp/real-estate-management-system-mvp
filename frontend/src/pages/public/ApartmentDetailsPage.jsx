@@ -24,6 +24,9 @@ export default function ApartmentDetailsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
+  const [rsdPrice, setRsdPrice] = useState(null);
+  const [rsdDate, setRsdDate]   = useState(null);
+
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -36,6 +39,8 @@ export default function ApartmentDetailsPage() {
   useEffect(() => {
     setLoading(true);
     setError("");
+    setRsdPrice(null);
+    setRsdDate(null);
     api
       .get(`/apartments/${id}`)
       .then((data) => setApartment(data))
@@ -45,6 +50,19 @@ export default function ApartmentDetailsPage() {
       })
       .finally(() => setLoading(false));
   }, [id]);
+
+  useEffect(() => {
+    if (!apartment || apartment.priceOnRequest || apartment.price == null) return;
+    api
+      .get("/exchange-rate")
+      .then(({ rate, date }) => {
+        const converted = apartment.price * rate;
+        setRsdPrice(converted.toLocaleString("sr-RS", { maximumFractionDigits: 0 }));
+        const [y, m, d] = date.split("-");
+        setRsdDate(`${d}.${m}.${y}`);
+      })
+      .catch(() => { /* graceful: EUR price already shown */ });
+  }, [apartment]);
 
   async function submitInquiry(e) {
     e.preventDefault();
@@ -128,6 +146,13 @@ export default function ApartmentDetailsPage() {
                   : "Cena: -"}
               </span>
             </div>
+
+            {rsdPrice && (
+              <div className="muted" style={{ fontSize: 13, marginTop: 6 }}>
+                ≈ {rsdPrice} RSD
+                {rsdDate && ` (kurs na dan ${rsdDate})`}
+              </div>
+            )}
           </div>
 
           <div className="card">
