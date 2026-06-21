@@ -7,6 +7,7 @@ const adminRoutes = require('./routes/admin');
 const publicRoutes = require('./routes/public');
 const errorHandler = require('./middleware/errorHandler');
 const employeeRoutes = require('./routes/employee');
+const adminUsersRoutes = require('./routes/adminUsers');
 
 const app = express();
 
@@ -16,6 +17,7 @@ app.use('/api', publicRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/employee', employeeRoutes);
+app.use('/api/admin', adminUsersRoutes);
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok' });

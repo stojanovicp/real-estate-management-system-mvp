@@ -44,6 +44,16 @@ router.post('/logout', (req, res) => {
   res.json({ message: 'Odjavljeni ste' });
 });
 
+router.get('/me', auth, asyncHandler(async (req, res) => {
+  const user = await User.findByPk(req.user.id, {
+    attributes: ['id', 'fullName', 'email', 'role', 'isActive']
+  });
+  if (!user) {
+    return res.status(404).json({ message: 'Korisnik nije pronađen' });
+  }
+  res.json(user);
+}));
+
 router.post('/register', auth, asyncHandler(async (req, res) => {
   if (req.user.role !== 'ADMIN') {
     return res.status(403).json({ message: 'Nemate dozvolu' });
