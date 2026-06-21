@@ -132,7 +132,11 @@ export default function ApartmentsPage() {
                   <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 10 }}>
                     <span className={statusBadgeClass(a.status)}>{statusLabel(a.status)}</span>
                     <span className="badge">
-                      {a.price != null ? `${a.price} €` : "Cena: -"}
+                      {a.priceOnRequest
+                        ? "Cena na upit"
+                        : a.price != null
+                        ? `${a.price} €`
+                        : "Cena: -"}
                     </span>
                   </div>
                 </div>

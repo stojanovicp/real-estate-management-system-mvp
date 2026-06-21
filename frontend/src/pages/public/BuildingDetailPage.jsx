@@ -145,7 +145,11 @@ export default function BuildingDetailPage() {
                         {statusLabel(a.status)}
                       </span>
                       <span className="badge">
-                        {a.price != null ? `${a.price} €` : 'Cena: -'}
+                        {a.priceOnRequest
+                          ? 'Cena na upit'
+                          : a.price != null
+                          ? `${a.price} €`
+                          : 'Cena: -'}
                       </span>
                     </div>
                   </div>

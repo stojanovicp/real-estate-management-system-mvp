@@ -29,11 +29,18 @@ router.get('/buildings/:id', asyncHandler(async (req, res) => {
 router.get('/buildings/:id/apartments', asyncHandler(async (req, res) => {
   const buildingId = Number(req.params.id);
 
-  const apartments = await Apartment.findAll({
-    where: { buildingId }
+  const apartments = await Apartment.findAll({ where: { buildingId } });
+
+  const masked = apartments.map((a) => {
+    const data = a.toJSON();
+    if (!data.isPricePublic) {
+      delete data.price;
+      data.priceOnRequest = true;
+    }
+    return data;
   });
 
-  res.json(apartments);
+  res.json(masked);
 }));
 
 // GET /api/apartments/:id
