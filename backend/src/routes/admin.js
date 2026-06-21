@@ -142,24 +142,21 @@ router.post(
   auth,
   requireRole('ADMIN'),
   asyncHandler(async (req, res) => {
-    const { buildingId, number, floor, rooms, area, price, status } = req.body;
+    const { buildingId, number, floor, rooms, area, price, status, isPricePublic, description, imageUrl } = req.body;
 
-    // buildingId je NOT NULL u bazi
     if (!buildingId) {
       return res.status(400).json({ message: 'buildingId je obavezan' });
     }
 
-    // Provera FK (building mora postojati)
     const building = await Building.findByPk(buildingId);
     if (!building) {
       return res.status(400).json({ message: 'Ne postoji zgrada sa datim buildingId' });
     }
 
-    // status je nullable, ali ako je poslat i nije null -> mora biti validan
     if (status !== undefined && status !== null) {
-      const allowedApartmentStatuses = ['available', 'reserved', 'sold'];
-      if (!allowedApartmentStatuses.includes(status)) {
-        return res.status(400).json({ message: 'Neispravan status stana' });
+      const allowedStatuses = ['AVAILABLE', 'RESERVED', 'SOLD'];
+      if (!allowedStatuses.includes(status)) {
+        return res.status(400).json({ message: 'Neispravan status stana. Dozvoljeno: AVAILABLE, RESERVED, SOLD' });
       }
     }
 
@@ -170,7 +167,10 @@ router.post(
       rooms: rooms ?? null,
       area: area ?? null,
       price: price ?? null,
-      status: status ?? null
+      status: status ?? null,
+      isPricePublic: isPricePublic !== undefined ? Boolean(isPricePublic) : false,
+      description: description ?? null,
+      imageUrl: imageUrl ?? null
     });
 
     res.status(201).json(apartment);
@@ -183,14 +183,13 @@ router.put(
   requireRole('ADMIN'),
   asyncHandler(async (req, res) => {
     const { id } = req.params;
-    const { buildingId, number, floor, rooms, area, price, status } = req.body;
+    const { buildingId, number, floor, rooms, area, price, status, isPricePublic, description, imageUrl } = req.body;
 
     const apartment = await Apartment.findByPk(id);
     if (!apartment) {
       return res.status(404).json({ message: 'Stan ne postoji' });
     }
 
-    // buildingId: ako je poslat, ne sme biti null (NOT NULL u bazi)
     if (buildingId !== undefined) {
       if (buildingId === null) {
         return res.status(400).json({ message: 'buildingId ne može biti null' });
@@ -202,18 +201,20 @@ router.put(
       apartment.buildingId = buildingId;
     }
 
-    // Ostala polja su nullable -> menjaj samo ako su poslata (dozvoljava i null)
     if (number !== undefined) apartment.number = number;
     if (floor !== undefined) apartment.floor = floor;
     if (rooms !== undefined) apartment.rooms = rooms;
     if (area !== undefined) apartment.area = area;
     if (price !== undefined) apartment.price = price;
+    if (isPricePublic !== undefined) apartment.isPricePublic = Boolean(isPricePublic);
+    if (description !== undefined) apartment.description = description;
+    if (imageUrl !== undefined) apartment.imageUrl = imageUrl;
 
     if (status !== undefined) {
       if (status !== null) {
-        const allowedApartmentStatuses = ['available', 'reserved', 'sold'];
-        if (!allowedApartmentStatuses.includes(status)) {
-          return res.status(400).json({ message: 'Neispravan status stana' });
+        const allowedStatuses = ['AVAILABLE', 'RESERVED', 'SOLD'];
+        if (!allowedStatuses.includes(status)) {
+          return res.status(400).json({ message: 'Neispravan status stana. Dozvoljeno: AVAILABLE, RESERVED, SOLD' });
         }
       }
       apartment.status = status;

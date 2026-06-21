@@ -45,7 +45,13 @@ router.get('/apartments/:id', asyncHandler(async (req, res) => {
     return res.status(404).json({ message: 'Stan nije pronađen' });
   }
 
-  res.json(apartment);
+  const data = apartment.toJSON();
+  if (!data.isPricePublic) {
+    delete data.price;
+    data.priceOnRequest = true;
+  }
+
+  res.json(data);
 }));
 
 // POST /api/inquiries

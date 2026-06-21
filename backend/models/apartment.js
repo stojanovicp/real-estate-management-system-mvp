@@ -33,7 +33,14 @@ module.exports = (sequelize, DataTypes) => {
     rooms: DataTypes.INTEGER,
     area: DataTypes.FLOAT,
     price: DataTypes.FLOAT,
-    status: DataTypes.STRING
+    status: DataTypes.STRING,
+    isPricePublic: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false
+    },
+    description: DataTypes.TEXT,
+    imageUrl: DataTypes.STRING
   }, {
     sequelize,
     modelName: 'Apartment',
