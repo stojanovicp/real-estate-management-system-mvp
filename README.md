@@ -1,105 +1,39 @@
-# Real Estate CRM
+# Platforma za upravljanje ponudom stanova
 
-Full-stack web platform for public apartment listing and internal sales management.
+Public apartment listing platform with an internal tool for managing inquiries and reservations.
 
-The system enables public users to browse available apartments and send inquiries, while authenticated users (Owner/Admin) manage leads, reservations and payments through an internal CRM module.
+Public users browse available buildings and apartments and submit inquiries. Authenticated internal users (Employee and Administrator) manage those inquiries and create reservations. The system enforces one active reservation per apartment and automatically keeps apartment status in sync with reservation changes.
 
 ---
 
 ## Tech Stack
 
-### Frontend
-- React
-- Tailwind CSS
-- REST API communication (JSON)
-
-### Backend
-- Node.js
-- Express
-- Role-based access control (RBAC)
-- RESTful architecture
-
-### Database
-- PostgreSQL
-- Relational data model with foreign keys and constraints
+- **Frontend:** React, React Router
+- **Backend:** Node.js, Express
+- **Database:** PostgreSQL
+- **ORM:** Sequelize (migrations + seeders)
+- **Auth:** JWT (Bearer token)
+- **External APIs:** OpenStreetMap / Leaflet (map), Frankfurter (EUR → RSD exchange rate)
 
 ---
 
-## Core Features
+## User Roles
 
-### Public Module
-- Browse buildings and apartments
-- Apartment filtering (floor, rooms, status)
-- Apartment details page
-- Controlled price visibility ("price on request")
-- Inquiry submission (linked to apartment or general)
-- Clickable building floor plan (image zone mapping)
-
-### Internal CRM Module (Admin / Owner)
-- Authentication & authorization
-- Lead (customer) management
-- Reservation management (one active reservation per apartment)
-- Payment tracking
-- Automatic apartment status updates (Available / Reserved / Sold)
-- Debt calculation per reservation
+| Role | Description |
+|---|---|
+| **Public User** | Not authenticated — browses buildings and apartments, views public prices, submits inquiries. |
+| **Employee** | Authenticated — views and updates inquiry status, creates and manages reservations. |
+| **Administrator** | Authenticated — all Employee permissions plus full CRUD on buildings, apartments, and internal user accounts. |
 
 ---
 
-## Architecture
-
-Frontend and backend are separated and communicate via REST API (JSON over HTTPS).
-
-- React handles UI rendering and routing.
-- Express handles business logic, validation and authorization.
-- PostgreSQL enforces data integrity (foreign keys, unique constraints).
-
----
-
-## Business Rules
-
-- One active reservation per apartment.
-- Apartment automatically becomes:
-  - **Reserved** when reservation is created.
-  - **Sold** when first valid payment is recorded.
-- Customer is auto-created or linked on inquiry submission (by email).
-
----
-
-## Roles
-
-| Role         | Permissions |
-|-------------|------------|
-| Public User | View listings, send inquiry |
-| Owner       | Manage leads, reservations, payments |
-| Admin       | Full access + manage buildings/apartments/floor plans |
-
----
-
-## Project Structure
-
-```
-backend/
-  models/
-  routes/
-  controllers/
-  middleware/
-  migrations/
-
-frontend/
-  pages/
-  components/
-  api/
-  auth/
-```
-
----
-
-## Installation
+## Running Locally
 
 ### Backend
 
 ```bash
 cd backend
+cp .env.example .env   # then fill in your values
 npm install
 npm run dev
 ```
@@ -112,8 +46,28 @@ npm install
 npm start
 ```
 
+The frontend expects the backend at `http://localhost:4000` by default. Override with `REACT_APP_API_BASE_URL` in `frontend/.env` (not committed).
+
 ---
 
-## Author
+## Environment Variables
 
-Petar Stojanović
+Create `backend/.env` based on `.env.example`:
+
+| Variable | Description |
+|---|---|
+| `DATABASE_URL` | PostgreSQL connection string, e.g. `postgres://user:pass@localhost:5432/iteh` |
+| `JWT_SECRET` | Secret key for signing JWT tokens |
+| `PORT` | Port for the backend server (default: `4000`) |
+
+---
+
+## Docker
+
+Docker and Docker Compose support will be added in a later task.
+
+---
+
+## Authors
+
+Petar Stojanović, Katarina Krneta, Nikola Todorović — FON, Internet tehnologije 2025
