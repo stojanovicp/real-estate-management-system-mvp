@@ -20,25 +20,25 @@ export default function AppLayout() {
       </div>
 
       <nav className="sidebar-nav">
-        {role === "admin" && (
+        {role === "ADMIN" && (
           <NavLink to="/app/buildings" className={({isActive}) => `sidebar-link ${isActive ? "active" : ""}`}>
             Zgrade
           </NavLink>
         )}
 
-        {(role === "admin" || role === "owner") && (
+        {(role === "ADMIN" || role === "EMPLOYEE") && (
           <NavLink to="/app/apartments" className={({isActive}) => `sidebar-link ${isActive ? "active" : ""}`}>
             Stanovi
           </NavLink>
         )}
 
-        {(role === "admin" || role === "owner" || role === "staff") && (
+        {(role === "ADMIN" || role === "EMPLOYEE") && (
           <NavLink to="/app/inquiries" className={({isActive}) => `sidebar-link ${isActive ? "active" : ""}`}>
             Upiti
           </NavLink>
         )}
 
-        {(role === "admin" || role === "owner") && (
+        {(role === "ADMIN" || role === "EMPLOYEE") && (
           <NavLink to="/app/reservations" className={({isActive}) => `sidebar-link ${isActive ? "active" : ""}`}>
             Rezervacije
           </NavLink>

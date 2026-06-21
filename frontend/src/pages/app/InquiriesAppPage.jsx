@@ -5,9 +5,8 @@ import DataTable from "../../components/DataTable";
 import ApiState from "../../components/ApiState";
 
 function endpointForRole(role) {
-  if (role === "admin") return "/admin/inquiries";
-  if (role === "owner") return "/owner/inquiries";
-  if (role === "staff") return "/staff/inquiries";
+  if (role === "ADMIN") return "/admin/inquiries";
+  if (role === "EMPLOYEE") return "/employee/inquiries";
   return null;
 }
 
@@ -65,7 +64,7 @@ export default function InquiriesAppPage() {
       <div className="page-head">
         <div>
           <h2 className="page-title">Upiti</h2>
-          <p className="page-sub">Pregled upita (admin/owner/staff).</p>
+          <p className="page-sub">Pregled upita.</p>
         </div>
       </div>
 

@@ -13,7 +13,7 @@ function badgeClassForStatus(status) {
 }
 
 export default function ApartmentsAppPage() {
-  const role = getRole(); // "admin" | "owner" | ...
+  const role = getRole(); // "ADMIN" | "EMPLOYEE"
 
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -23,9 +23,8 @@ export default function ApartmentsAppPage() {
   const [selected, setSelected] = useState(null);
 
   const listEndpoint = useMemo(() => {
-    if (role === "admin") return "/admin/apartments";
-    if (role === "owner") return "/owner/apartments";
-    return "/owner/apartments";
+    if (role === "ADMIN") return "/admin/apartments";
+    return "/employee/apartments";
   }, [role]);
 
   const resetForm = useCallback(() => {
@@ -83,7 +82,7 @@ export default function ApartmentsAppPage() {
       },
     ];
 
-    if (role === "admin") {
+    if (role === "ADMIN") {
       base.push({
         label: "Obriši",
         onClick: async (r) => {
@@ -126,9 +125,9 @@ export default function ApartmentsAppPage() {
   const update = useCallback(
     async (values) => {
       const endpoint =
-        role === "admin"
+        role === "ADMIN"
           ? `/admin/apartments/${selected.id}`
-          : `/owner/apartments/${selected.id}`;
+          : `/employee/apartments/${selected.id}`;
 
       await api.put(endpoint, values);
       await load();
@@ -146,11 +145,11 @@ export default function ApartmentsAppPage() {
         <div>
           <h2 className="page-title">Stanovi</h2>
           <p className="page-sub">
-            {role === "admin" ? "Admin upravljanje stanovima." : "Owner pregled i izmena stanova."}
+            {role === "ADMIN" ? "Admin upravljanje stanovima." : "Pregled i izmena stanova."}
           </p>
         </div>
 
-        {mode === "list" && role === "admin" ? (
+        {mode === "list" && role === "ADMIN" ? (
           <button className="btn btn-primary" onClick={() => setMode("create")}>
             Novi stan
           </button>

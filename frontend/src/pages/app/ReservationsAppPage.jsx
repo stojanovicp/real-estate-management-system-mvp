@@ -6,8 +6,8 @@ import EntityForm from "../../components/EntityForm";
 import ApiState from "../../components/ApiState";
 
 function endpointForRole(role) {
-  if (role === "admin") return "/admin/reservations";
-  if (role === "owner") return "/owner/reservations";
+  if (role === "ADMIN") return "/admin/reservations";
+  if (role === "EMPLOYEE") return "/employee/reservations";
   return null;
 }
 
@@ -112,7 +112,7 @@ export default function ReservationsAppPage() {
   );
 
   const actions = useMemo(() => {
-    if (role !== "admin") return [];
+    if (role !== "ADMIN") return [];
 
     return [
       {
@@ -207,10 +207,10 @@ export default function ReservationsAppPage() {
       <div className="page-head">
         <div>
           <h2 className="page-title">Rezervacije</h2>
-          <p className="page-sub">Admin: CRUD. Owner: pregled.</p>
+          <p className="page-sub">Admin: CRUD. Zaposleni: pregled.</p>
         </div>
 
-        {role === "admin" && mode === "list" ? (
+        {role === "ADMIN" && mode === "list" ? (
           <button className="btn btn-primary" onClick={() => setMode("create")}>
             Nova rezervacija
           </button>

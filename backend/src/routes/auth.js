@@ -45,7 +45,7 @@ router.post('/logout', (req, res) => {
 });
 
 router.post('/register', auth, asyncHandler(async (req, res) => {
-  if (req.user.role !== 'admin') {
+  if (req.user.role !== 'ADMIN') {
     return res.status(403).json({ message: 'Nemate dozvolu' });
   }
 
@@ -54,7 +54,7 @@ router.post('/register', auth, asyncHandler(async (req, res) => {
     return res.status(400).json({ message: 'Sva polja su obavezna' });
   }
 
-  const allowedRoles = ['admin', 'owner', 'staff'];
+  const allowedRoles = ['EMPLOYEE', 'ADMIN'];
   if (!allowedRoles.includes(role)) {
     return res.status(400).json({ message: 'Neispravna uloga' });
   }

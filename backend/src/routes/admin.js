@@ -10,7 +10,7 @@ const { Inquiry, Apartment, Building, Reservation } = require('../../models');
 router.get(
   '/inquiries',
   auth,
-  requireRole('admin'),
+  requireRole('ADMIN'),
   asyncHandler(async (req, res) => {
     const inquiries = await Inquiry.findAll({
       include: {
@@ -30,7 +30,7 @@ router.get(
 router.get(
   '/buildings',
   auth,
-  requireRole('admin'),
+  requireRole('ADMIN'),
   asyncHandler(async (req, res) => {
     const buildings = await Building.findAll({
       order: [['createdAt', 'DESC']]
@@ -43,7 +43,7 @@ router.get(
 router.post(
   '/buildings',
   auth,
-  requireRole('admin'),
+  requireRole('ADMIN'),
   asyncHandler(async (req, res) => {
     const { name, address } = req.body;
 
@@ -60,7 +60,7 @@ router.post(
 router.put(
   '/buildings/:id',
   auth,
-  requireRole('admin'),
+  requireRole('ADMIN'),
   asyncHandler(async (req, res) => {
     const { id } = req.params;
     const { name, address } = req.body;
@@ -82,7 +82,7 @@ router.put(
 router.delete(
   '/buildings/:id',
   auth,
-  requireRole('admin'),
+  requireRole('ADMIN'),
   asyncHandler(async (req, res) => {
     const { id } = req.params;
 
@@ -110,7 +110,7 @@ router.delete(
 router.get(
   '/apartments',
   auth,
-  requireRole('admin'),
+  requireRole('ADMIN'),
   asyncHandler(async (req, res) => {
     const apartments = await Apartment.findAll({
       include: [
@@ -130,7 +130,7 @@ router.get(
 router.post(
   '/apartments',
   auth,
-  requireRole('admin'),
+  requireRole('ADMIN'),
   asyncHandler(async (req, res) => {
     const { buildingId, number, floor, rooms, area, price, status } = req.body;
 
@@ -170,7 +170,7 @@ router.post(
 router.put(
   '/apartments/:id',
   auth,
-  requireRole('admin'),
+  requireRole('ADMIN'),
   asyncHandler(async (req, res) => {
     const { id } = req.params;
     const { buildingId, number, floor, rooms, area, price, status } = req.body;
@@ -217,7 +217,7 @@ router.put(
 router.delete(
   '/apartments/:id',
   auth,
-  requireRole('admin'),
+  requireRole('ADMIN'),
   asyncHandler(async (req, res) => {
     const { id } = req.params;
 
@@ -245,7 +245,7 @@ router.delete(
 router.get(
   '/reservations',
   auth,
-  requireRole('admin'),
+  requireRole('ADMIN'),
   asyncHandler(async (req, res) => {
     const reservations = await Reservation.findAll({
       include: [
@@ -270,7 +270,7 @@ router.get(
 router.post(
   '/reservations',
   auth,
-  requireRole('admin'),
+  requireRole('ADMIN'),
   asyncHandler(async (req, res) => {
     const { apartmentId, startDate, endDate, status } = req.body;
 
@@ -319,7 +319,7 @@ router.post(
 router.put(
   '/reservations/:id',
   auth,
-  requireRole('admin'),
+  requireRole('ADMIN'),
   asyncHandler(async (req, res) => {
     const { id } = req.params;
     const { startDate, endDate, status } = req.body;
@@ -365,7 +365,7 @@ router.put(
 router.delete(
   '/reservations/:id',
   auth,
-  requireRole('admin'),
+  requireRole('ADMIN'),
   asyncHandler(async (req, res) => {
     const { id } = req.params;
 
